@@ -1,9 +1,6 @@
 use std::fs;
 
-use nom::{
-    branch::alt, bytes::complete::tag, character::complete::newline, combinator::map,
-    multi::separated_list1, IResult,
-};
+use day_10::{parse_input, Instruction};
 
 fn main() {
     let input = fs::read_to_string("./input.txt").unwrap();
@@ -14,7 +11,6 @@ fn main() {
 fn part_1(input: &str) -> Result<i32, nom::Err<nom::error::Error<&str>>> {
     let (_, instructions) = parse_input(input)?;
     let mut cycles_of_interest = (20..=220).step_by(40);
-    dbg!(&cycles_of_interest.clone().collect::<Vec<_>>());
     let mut cycle_to_monitor = cycles_of_interest.next();
     let mut current_cycle = 1;
     let mut instruction_iter = instructions.iter();
@@ -29,7 +25,6 @@ fn part_1(input: &str) -> Result<i32, nom::Err<nom::error::Error<&str>>> {
                     }
                     Instruction::AddX(amount) => {
                         if current_cycle + 2 > cycle_of_interest {
-                            dbg!(current_cycle, cycle_of_interest, x_register);
                             signal_values.push(cycle_of_interest * x_register);
                             cycle_to_monitor = cycles_of_interest.next();
                         }
@@ -48,30 +43,6 @@ fn part_1(input: &str) -> Result<i32, nom::Err<nom::error::Error<&str>>> {
     dbg!(&signal_values, x_register);
     let sum_of_signals = signal_values.into_iter().sum::<i32>();
     Ok(sum_of_signals)
-}
-
-fn parse_input(input: &str) -> IResult<&str, Vec<Instruction>> {
-    separated_list1(newline, instruction)(input)
-}
-
-fn instruction(input: &str) -> IResult<&str, Instruction> {
-    alt((noop, addx))(input)
-}
-
-fn noop(input: &str) -> IResult<&str, Instruction> {
-    map(tag("noop"), |_| Instruction::Noop)(input)
-}
-
-fn addx(input: &str) -> IResult<&str, Instruction> {
-    let (input, _) = tag("addx ")(input)?;
-    let (input, val) = nom::character::complete::i32(input)?;
-
-    Ok((input, Instruction::AddX(val)))
-}
-
-enum Instruction {
-    Noop,
-    AddX(i32),
 }
 
 #[cfg(test)]
